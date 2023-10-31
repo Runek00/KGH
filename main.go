@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 )
 
 func main() {
@@ -58,7 +60,14 @@ func main() {
 }
 
 func openConfigFile() {
-	panic("unimplemented")
+	switch runtime.GOOS {
+	case "windows":
+		exec.Command(".\\config.txt")
+	case "linux":
+		exec.Command("edit", "./config.txt")
+	default:
+		fmt.Println("I don't know this system")
+	}
 }
 
 func addRepos(s string) {
