@@ -62,11 +62,22 @@ func main() {
 func openConfigFile() {
 	switch runtime.GOOS {
 	case "windows":
-		exec.Command(".\\config.txt")
+		execute("cmd", "/c", ".\\config.txt")
 	case "linux":
-		exec.Command("edit", "./config.txt")
+		execute("edit", "./config.txt")
 	default:
 		fmt.Println("I don't know this system")
+	}
+}
+
+func execute(name string, arg ...string) {
+	cmd := exec.Command(name, arg...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Start()
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 
