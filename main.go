@@ -8,13 +8,14 @@ import (
 )
 
 func main() {
+	ReadConfig()
 	/*
 		flags:
 			c	config						open config in vim / default editor
 			a	add-repos <path>			add all repos in path to repo list
 			r	remove-repos <path>			remove all repos in path from repo list
-			l	repo-list					show repo list
-			t	template <tmpl>				set template for the output. Can use variables "repoName" and "hash"
+			l	repo-list					show repo list, interact with the repos
+			t	template <tmpl>				set default template for the output. Can use variables "repoName" and "hash"
 			p	pull-all					pull all repos from list
 			f	find-commits <msg>			find all commits containing msg in the commit message in the repo list
 					--no-clipboard			don't copy the output to the clipboard
@@ -82,11 +83,11 @@ func execute(name string, arg ...string) {
 }
 
 func addRepos(s string) {
-	panic("unimplemented")
+	AddRepos(FindRepos(s))
 }
 
 func removeRepos(s string) {
-	panic("unimplemented")
+	RemoveRepos(FindRepos(s))
 }
 
 func printRepoList() {
