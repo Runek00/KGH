@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"text/template"
 )
 
 type Conf struct {
-	repos           map[string]Repo
+	Repos           map[string]Repo
 	DefaultTemplate string
 	OutputFilePath  string
 }
@@ -20,20 +21,29 @@ var templateSet = false
 var reposSet = false
 var filePathSet = false
 
+var configTemplate = `{{ range $index, $value := .Repos }}repo: {{$value.Path}}::{{$value.Name}}::{{$value.Template}}
+{{ end }}
+template: {{.DefaultTemplate}}
+filePath: {{.OutputFilePath}}`
+
 func ReadConfig() error {
 	file, err := os.Open("config.txt")
 	templateSet = false
 	reposSet = false
 	filePathSet = false
-	newConfig := Conf{}
+	newConfig := Conf{make(map[string]Repo), "", ""}
 	if err != nil {
 		fmt.Println("Cannot open file. Starting a new config.")
+		file, err = os.Create("config.txt")
+		if err != nil {
+			return err
+		}
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if !reposSet && !strings.HasPrefix(line, "repo") && len(newConfig.repos) > 0 {
+		if !reposSet && !strings.HasPrefix(line, "repo") && len(newConfig.Repos) > 0 {
 			reposSet = true
 		}
 		if strings.HasPrefix(line, "repo") {
@@ -50,7 +60,7 @@ func ReadConfig() error {
 			} else {
 				repo = Repo{repoLine[0], repoLine[1], repoLine[2]}
 			}
-			newConfig.repos[repo.path] = repo
+			newConfig.Repos[repo.Path] = repo
 		}
 		if strings.HasPrefix(line, "template") {
 			if templateSet {
@@ -71,25 +81,38 @@ func ReadConfig() error {
 	return nil
 }
 
-func SaveConfig() {
-	// TODO config template -> config to tamplate -> to file
+func SaveConfig() error {
+	tmpl := template.New("configTemplate")
+	tmpl, err := tmpl.Parse(configTemplate)
+	if err != nil {
+		return err
+	}
+	file, err := os.Create("config.txt")
+	if err != nil {
+		return err
+	}
+	err = tmpl.Execute(file, Config)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func AddRepos(repos []Repo) {
 	for _, repo := range repos {
-		Config.repos[repo.path] = repo
+		Config.Repos[repo.Path] = repo
 	}
 }
 
 func RemoveRepos(repos []Repo) {
 	for _, repo := range repos {
-		delete(Config.repos, repo.path)
+		delete(Config.Repos, repo.Path)
 	}
 }
 
 func GetRepos() []Repo {
-	output := make([]Repo, 0, len(Config.repos))
-	for _, k := range Config.repos {
+	output := make([]Repo, 0, len(Config.Repos))
+	for _, k := range Config.Repos {
 		output = append(output, k)
 	}
 	return output

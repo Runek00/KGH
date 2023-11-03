@@ -84,10 +84,18 @@ func execute(name string, arg ...string) {
 
 func addRepos(s string) {
 	AddRepos(FindRepos(s))
+	err := SaveConfig()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func removeRepos(s string) {
 	RemoveRepos(FindRepos(s))
+	err := SaveConfig()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func printRepoList() {

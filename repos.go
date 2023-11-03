@@ -7,9 +7,9 @@ import (
 )
 
 type Repo struct {
-	name     string
-	path     string
-	template string
+	Name     string
+	Path     string
+	Template string
 }
 
 func FindRepos(path string) []Repo {
