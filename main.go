@@ -42,7 +42,7 @@ func main() {
 		case "l":
 			fallthrough
 		case "repo-list":
-			printRepoList()
+			RepoTool()
 		case "t":
 			fallthrough
 		case "template":
@@ -96,10 +96,6 @@ func removeRepos(s string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-}
-
-func printRepoList() {
-	panic("unimplemented")
 }
 
 func setCommitTemplate(s string) {
