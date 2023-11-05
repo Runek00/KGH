@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -9,6 +10,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+
+	"github.com/go-git/go-git/v5"
 )
 
 type Repo struct {
@@ -27,7 +31,7 @@ func FindRepos(path string) []Repo {
 			}
 			for _, entry := range direntries {
 				if entry.IsDir() && entry.Name() == ".git" {
-					output = append(output, Repo{info.Name(), path, ""})
+					output = append(output, Repo{path, info.Name(), ""})
 					break
 				}
 			}
@@ -178,5 +182,43 @@ func printRepoList() {
 }
 
 func PullAll() {
-	panic("unimplemented")
+	errorsC := make(chan error)
+
+	wg := sync.WaitGroup{}
+
+	pull := func(repo Repo, errorsChan chan error) {
+		r, err := git.PlainOpen(repo.Path)
+		if err != nil {
+			errorsChan <- err
+			wg.Done()
+			return
+		}
+		w, err := r.Worktree()
+		if err != nil {
+			errorsChan <- err
+			wg.Done()
+			return
+		}
+		err = w.Pull(&git.PullOptions{RemoteName: "origin"})
+		if err != nil && err.Error() != "already up-to-date" {
+			errorsChan <- errors.New(repo.Name + ": " + err.Error())
+			wg.Done()
+			return
+		}
+		wg.Done()
+	}
+	go func() {
+		for er := range errorsC {
+			fmt.Println(er)
+		}
+	}()
+	for _, repo := range Config.Repos {
+		wg.Add(1)
+		fmt.Println(repo.Name)
+		go pull(repo, errorsC)
+	}
+
+	wg.Wait()
+	close(errorsC)
+	fmt.Println("Done")
 }

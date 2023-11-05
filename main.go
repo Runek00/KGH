@@ -46,11 +46,11 @@ func main() {
 		case "t":
 			fallthrough
 		case "template":
-			setCommitTemplate(os.Args[2])
+			setDefaultTemplate(os.Args[2])
 		case "p":
 			fallthrough
 		case "pull-all":
-			pullAll()
+			PullAll()
 		case "f":
 			fallthrough
 		case "find-commits":
@@ -98,12 +98,9 @@ func removeRepos(s string) {
 	}
 }
 
-func setCommitTemplate(s string) {
-	panic("unimplemented")
-}
-
-func pullAll() {
-	panic("unimplemented")
+func setDefaultTemplate(template string) {
+	Config.DefaultTemplate = template
+	SaveConfig()
 }
 
 func findCommits(s string) {
