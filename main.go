@@ -10,12 +10,12 @@ import (
 func main() {
 	ReadConfig()
 	/*
-		flags:
+		options:
 			c	config						open config in vim / default editor
 			a	add-repos <path>			add all repos in path to repo list
 			r	remove-repos <path>			remove all repos in path from repo list
 			l	repo-list					show repo list, interact with the repos
-			t	template <tmpl>				set default template for the output. Can use variables "Hash", "Author", "Commiter", "Message" and "RepoName"
+			t	template <tmpl>				set default template for the output. Can use variables {{.Hash}}, {{.Author}}, {{.Commiter}}, {{.Message}} and {{.RepoName}}
 			p	pull-all					pull all repos from list
 			f	find-commits <msg>			find all commits containing msg in the commit message in the repo list
 					--no-clipboard			don't copy the output to the clipboard
