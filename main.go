@@ -15,7 +15,7 @@ func main() {
 			a	add-repos <path>			add all repos in path to repo list
 			r	remove-repos <path>			remove all repos in path from repo list
 			l	repo-list					show repo list, interact with the repos
-			t	template <tmpl>				set default template for the output. Can use variables "repoName" and "hash"
+			t	template <tmpl>				set default template for the output. Can use variables "Hash", "Author", "Commiter", "Message" and "RepoName"
 			p	pull-all					pull all repos from list
 			f	find-commits <msg>			find all commits containing msg in the commit message in the repo list
 					--no-clipboard			don't copy the output to the clipboard
@@ -54,7 +54,7 @@ func main() {
 		case "f":
 			fallthrough
 		case "find-commits":
-			findCommits(os.Args[2])
+			FindCommits(os.Args[2])
 		}
 	}
 	fmt.Println(os.Args[1:])
@@ -101,8 +101,4 @@ func removeRepos(s string) {
 func setDefaultTemplate(template string) {
 	Config.DefaultTemplate = template
 	SaveConfig()
-}
-
-func findCommits(s string) {
-	panic("unimplemented")
 }

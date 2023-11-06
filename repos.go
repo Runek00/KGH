@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -11,14 +12,24 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"text/template"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 type Repo struct {
 	Path     string
 	Name     string
 	Template string
+}
+
+type CommitInfo struct {
+	Hash     string
+	Author   string
+	Commiter string
+	Message  string
+	RepoName string
 }
 
 func FindRepos(path string) []Repo {
@@ -221,4 +232,60 @@ func PullAll() {
 	wg.Wait()
 	close(errorsC)
 	fmt.Println("Done")
+}
+
+func FindCommits(taskId string) {
+	commitsChan := make(chan string)
+
+	wg := sync.WaitGroup{}
+
+	findCommit := func(repo Repo, commitsC chan string) {
+		tmpl := template.New("repoTemplate")
+		repoTemplate := repo.Template
+		if repoTemplate == "" {
+			repoTemplate = Config.DefaultTemplate
+		}
+		tmpl, err := tmpl.Parse(repoTemplate)
+		if err != nil {
+			fmt.Println(err)
+			wg.Done()
+			return
+		}
+		r, err := git.PlainOpen(repo.Path)
+		if err != nil {
+			fmt.Println(err)
+			wg.Done()
+			return
+		}
+		ci, err := r.CommitObjects()
+		if err != nil {
+			fmt.Println(err)
+			wg.Done()
+			return
+		}
+		ci.ForEach(func(c *object.Commit) error {
+			buf := &bytes.Buffer{}
+			if strings.Contains(c.Message, taskId) {
+				info := CommitInfo{c.Hash.String(), c.Author.Name, c.Committer.Name, c.Message, repo.Name}
+				tmpl.Execute(buf, info)
+				commitsC <- buf.String()
+			}
+			return nil
+		})
+		wg.Done()
+	}
+	for _, repo := range Config.Repos {
+		wg.Add(1)
+		fmt.Println(repo.Name)
+		go findCommit(repo, commitsChan)
+	}
+	go func() {
+		for str := range commitsChan {
+			fmt.Println(str)
+		}
+	}()
+	wg.Wait()
+	close(commitsChan)
+	fmt.Println("Done")
+
 }
