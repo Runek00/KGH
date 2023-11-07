@@ -14,6 +14,7 @@ import (
 	"sync"
 	"text/template"
 
+	"github.com/atotto/clipboard"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
@@ -279,13 +280,15 @@ func FindCommits(taskId string) {
 		fmt.Println(repo.Name)
 		go findCommit(repo, commitsChan)
 	}
+	output := ""
 	go func() {
 		for str := range commitsChan {
-			fmt.Println(str)
+			output += str + "\n"
 		}
 	}()
 	wg.Wait()
 	close(commitsChan)
+	clipboard.WriteAll(output)
 	fmt.Println("Done")
 
 }
