@@ -58,7 +58,6 @@ func main() {
 			FindCommits()
 		}
 	}
-	fmt.Println(os.Args[1:])
 }
 
 func openConfigFile() {

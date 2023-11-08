@@ -201,24 +201,21 @@ func PullAll() {
 
 	pull := func(repo Repo, errorsChan chan error) {
 		r, err := git.PlainOpen(repo.Path)
+		defer wg.Done()
 		if err != nil {
 			errorsChan <- err
-			wg.Done()
 			return
 		}
 		w, err := r.Worktree()
 		if err != nil {
 			errorsChan <- err
-			wg.Done()
 			return
 		}
 		err = w.Pull(&git.PullOptions{RemoteName: "origin"})
 		if err != nil && err.Error() != "already up-to-date" {
 			errorsChan <- errors.New(repo.Name + ": " + err.Error())
-			wg.Done()
 			return
 		}
-		wg.Done()
 	}
 	go func() {
 		for er := range errorsC {
@@ -248,6 +245,7 @@ func FindCommits() {
 	wg := sync.WaitGroup{}
 
 	findCommit := func(repo Repo, commitsC chan string) {
+		defer wg.Done()
 		tmpl := template.New("repoTemplate")
 		repoTemplate := repo.Template
 		if repoTemplate == "" {
@@ -256,19 +254,16 @@ func FindCommits() {
 		tmpl, err := tmpl.Parse(repoTemplate)
 		if err != nil {
 			fmt.Println(err)
-			wg.Done()
 			return
 		}
 		r, err := git.PlainOpen(repo.Path)
 		if err != nil {
 			fmt.Println(err)
-			wg.Done()
 			return
 		}
 		ci, err := r.CommitObjects()
 		if err != nil {
 			fmt.Println(err)
-			wg.Done()
 			return
 		}
 		ci.ForEach(func(c *object.Commit) error {
@@ -280,7 +275,6 @@ func FindCommits() {
 			}
 			return nil
 		})
-		wg.Done()
 	}
 	for _, repo := range Config.Repos {
 		wg.Add(1)
@@ -289,7 +283,11 @@ func FindCommits() {
 	}
 	output := ""
 	go func() {
+		commitSet := make(map[string]bool, 0)
 		for str := range commitsChan {
+			commitSet[str] = true
+		}
+		for str := range commitSet {
 			output += str + "\n"
 		}
 	}()
