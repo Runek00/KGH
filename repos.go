@@ -281,30 +281,32 @@ func FindCommits() {
 		fmt.Println(repo.Name)
 		go findCommit(repo, commitsChan)
 	}
-	output := ""
+	found := ""
+	foundCnt := 0
 	go func() {
 		commitSet := make(map[string]bool, 0)
 		for str := range commitsChan {
 			commitSet[str] = true
 		}
 		for str := range commitSet {
-			output += str + "\n"
+			found += str + "\n"
 		}
+		foundCnt = len(commitSet)
 	}()
 	wg.Wait()
 	close(commitsChan)
 	if !*fNoClip {
-		clipboard.WriteAll(output)
+		clipboard.WriteAll(found)
 	}
 	if *fFile != "" {
 		file, err := os.Create(*fFile)
 		if err != nil {
 			fmt.Println("Couldn't create output file")
 		}
-		file.WriteString(output)
+		file.WriteString(found)
 	}
 	if *fPrint {
-		fmt.Println(output)
+		fmt.Println(found)
 	}
-	fmt.Println("Done")
+	fmt.Println("Done (" + fmt.Sprint(foundCnt) + " results)")
 }
