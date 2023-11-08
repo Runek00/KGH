@@ -17,10 +17,11 @@ func main() {
 			l	repo-list					show repo list, interact with the repos
 			t	template <tmpl>				set default template for the output. Can use variables {{.Hash}}, {{.Author}}, {{.Commiter}}, {{.Message}} and {{.RepoName}}
 			p	pull-all					pull all repos from list
-			f	find-commits <msg>			find all commits containing msg in the commit message in the repo list
-					--no-clipboard			don't copy the output to the clipboard
-				-F	--file, --File [path]	output to the file (sets path if present)
-				-r	--print					print the result in command line
+			f	find-commits				find all commits containing msg in the commit message in the repo list
+				--no-clipboard				don't copy the output to the clipboard
+				-f <path>					output to the file in path
+				-p							print the result in command line
+				<msg>						pattern to find
 			g	gui							open in GUI mode
 	*/
 	if len(os.Args) < 2 {
@@ -54,7 +55,7 @@ func main() {
 		case "f":
 			fallthrough
 		case "find-commits":
-			FindCommits(os.Args[2])
+			FindCommits()
 		}
 	}
 	fmt.Println(os.Args[1:])

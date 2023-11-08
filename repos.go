@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -235,7 +236,13 @@ func PullAll() {
 	fmt.Println("Done")
 }
 
-func FindCommits(taskId string) {
+func FindCommits() {
+	fCmd := flag.NewFlagSet("f", flag.ExitOnError)
+	fNoClip := fCmd.Bool("no-clipboard", false, "no-clipboard")
+	fFile := fCmd.String("f", "", "f")
+	fPrint := fCmd.Bool("p", false, "p")
+	fCmd.Parse(os.Args[2:])
+	taskId := fCmd.Args()[0]
 	commitsChan := make(chan string)
 
 	wg := sync.WaitGroup{}
@@ -288,7 +295,18 @@ func FindCommits(taskId string) {
 	}()
 	wg.Wait()
 	close(commitsChan)
-	clipboard.WriteAll(output)
+	if !*fNoClip {
+		clipboard.WriteAll(output)
+	}
+	if *fFile != "" {
+		file, err := os.Create(*fFile)
+		if err != nil {
+			fmt.Println("Couldn't create output file")
+		}
+		file.WriteString(output)
+	}
+	if *fPrint {
+		fmt.Println(output)
+	}
 	fmt.Println("Done")
-
 }
