@@ -51,7 +51,7 @@ func main() {
 		case "p":
 			fallthrough
 		case "pull-all":
-			PullAll()
+			pullAll()
 		case "f":
 			fallthrough
 		case "find-commits":
@@ -101,4 +101,14 @@ func removeRepos(s string) {
 func setDefaultTemplate(template string) {
 	Config.DefaultTemplate = template
 	SaveConfig()
+}
+
+func pullAll() {
+	outputChan := make(chan string)
+	go func() {
+		for out := range outputChan {
+			fmt.Println(out)
+		}
+	}()
+	PullAll(outputChan)
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -91,7 +90,7 @@ func repoNumPick() {
 			printRepoList()
 			continue
 		case "p":
-			PullAll()
+			PullAll(make(chan string))
 		default:
 			idx, err := strconv.Atoi(input)
 			if err != nil {
@@ -194,46 +193,41 @@ func printRepoList() {
 	}
 }
 
-func PullAll() {
-	errorsC := make(chan error)
-
+func PullAll(statusChan chan string) {
 	wg := sync.WaitGroup{}
 
-	pull := func(repo Repo, errorsChan chan error) {
+	pull := func(repo Repo, errorsChan chan string) {
 		r, err := git.PlainOpen(repo.Path)
 		defer wg.Done()
 		if err != nil {
-			errorsChan <- err
+			statusChan <- "Error: " + err.Error()
 			return
 		}
 		w, err := r.Worktree()
 		if err != nil {
-			errorsChan <- err
+			statusChan <- "Error: " + err.Error()
 			return
 		}
 		err = w.Pull(&git.PullOptions{RemoteName: "origin"})
 		if err != nil && err.Error() != "already up-to-date" {
-			errorsChan <- errors.New(repo.Name + ": " + err.Error())
+			statusChan <- "Error: " + repo.Name + ": " + err.Error()
 			return
 		}
 	}
-	go func() {
-		for er := range errorsC {
-			fmt.Println(er)
-		}
-	}()
+
+	statusChan <- "Beginning pulling " + fmt.Sprint(len(Config.Repos)) + " repos"
 	for _, repo := range Config.Repos {
 		wg.Add(1)
-		fmt.Println(repo.Name)
-		go pull(repo, errorsC)
+		go pull(repo, statusChan)
 	}
+	statusChan <- "All started"
 
 	wg.Wait()
-	close(errorsC)
-	fmt.Println("Done")
+	statusChan <- "Pull All finished"
+	close(statusChan)
 }
 
-func FindCommits() {
+func FindCommits() string {
 	fCmd := flag.NewFlagSet("f", flag.ExitOnError)
 	fNoClip := fCmd.Bool("no-clipboard", false, "no-clipboard")
 	fFile := fCmd.String("f", "", "f")
@@ -309,4 +303,5 @@ func FindCommits() {
 		fmt.Println(found)
 	}
 	fmt.Println("Done (" + fmt.Sprint(foundCnt) + " results)")
+	return found
 }
