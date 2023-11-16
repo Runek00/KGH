@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/missing.css@1.1.1">
     <script src="https://unpkg.com/htmx.org@1.9.8"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
 </head>
 <body>
     <p>
@@ -14,14 +15,15 @@
         <input type="text" name="input" id="find_input" autofocus 
             hx-post="/find"
             hx-trigger="keyup[code is 'Enter'], buttonEvent"
-            hx-target="result"
+            hx-target="#result"
             hx-indicator="spinner"
             hx-swap="afterbegin">
         <button _="on click send buttonEvent to #find_input">{{.Lang.FindButtonLabel}}</button>
     </p>
-    <button hx-get="/pullAll" hx-target="result">Pull All</button>
+    <button hx-get="/pullAll" hx-target="#result" hx-swap="afterbegin">Pull All</button>
     <img id="spinner" class="htmx-indicator" src="/img/spinning-circles.svg" alt="Request In Flight..."/>
-    <p id="result"></p>
+    <p id="result">
+    </p>
 
 TODO:
  Button config
