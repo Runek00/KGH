@@ -105,6 +105,7 @@ func setDefaultTemplate(template string) {
 
 func pullAll() {
 	outputChan := make(chan string)
+	defer close(outputChan)
 	go func() {
 		for out := range outputChan {
 			fmt.Println(out)

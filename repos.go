@@ -224,7 +224,6 @@ func PullAll(statusChan chan string) {
 
 	wg.Wait()
 	statusChan <- "Pull All finished"
-	close(statusChan)
 }
 
 func FindCommits() string {

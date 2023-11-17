@@ -14,7 +14,7 @@
         <label for="find_input">{{.Lang.FindInputLabel}}</label>
         <input type="text" name="input" id="find_input" autofocus 
             hx-post="/find"
-            hx-trigger="keyup[code is 'Enter'], buttonEvent"
+            hx-trigger="buttonEvent"
             hx-target="#result"
             hx-indicator="spinner"
             hx-swap="afterbegin">
