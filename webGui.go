@@ -1,10 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/r3labs/sse"
 )
 
 type Translations struct {
@@ -35,30 +36,30 @@ func getMainPageData() PageData {
 
 func pullAllHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.New("sse-element")
-	tmpl.Parse(`<div id="yolo" name="sse" hx-ext="sse" sse-connect="/pullEvents" sse-swap="message" hx-swap="afterend">`)
+	tmpl.Parse(`<div id="yolo" name="sse" hx-ext="sse" sse-connect="/pullEvents?stream=message" sse-swap="message, finished" hx-swap="afterend" _="on finished remove me">`)
 	tmpl.Execute(w, nil)
 }
 
 func pullEvents(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "text/event-stream")
+	server := sse.New()
+	server.CreateStream("message")
+	go server.HTTPHandler(w, r)
 	statusChan := make(chan string)
 	defer func() {
 		close(statusChan)
 		statusChan = nil
 	}()
-	go func(flusher http.Flusher) {
-		for {
-			if statusChan == nil {
-				break
-			}
-			fmt.Fprintf(w, "type: message\ndata: "+<-statusChan)
-			flusher.Flush()
+	go func() {
+		for status := range statusChan {
+			server.Publish("message", &sse.Event{
+				Data:  []byte("<p>" + status + "</p>"),
+				Event: []byte("message"),
+			})
 		}
-		fmt.Fprintf(w, "type: finished")
-		flusher.Flush()
-	}(w.(http.Flusher))
+		server.Publish("message", &sse.Event{
+			Event: []byte("finished"),
+		})
+		server.Close()
+	}()
 	PullAll(statusChan)
 }

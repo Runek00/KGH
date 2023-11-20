@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/go-git/go-git/v5"
@@ -219,9 +220,10 @@ func PullAll(statusChan chan string) {
 	for _, repo := range Config.Repos {
 		wg.Add(1)
 		go pull(repo, statusChan)
+		time.Sleep(time.Second)
 	}
 	statusChan <- "All started"
-
+	time.Sleep(time.Second * 3)
 	wg.Wait()
 	statusChan <- "Pull All finished"
 }
