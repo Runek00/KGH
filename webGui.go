@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/r3labs/sse"
 )
@@ -36,7 +37,7 @@ func getMainPageData() PageData {
 
 func pullAllHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.New("sse-element")
-	tmpl.Parse(`<div id="yolo" name="sse" hx-ext="sse" sse-connect="/pullEvents?stream=message" sse-swap="message, finished" hx-swap="afterend" _="on finished remove me">`)
+	tmpl.Parse(`<div id="yolo" name="sse" hx-ext="sse" sse-connect="/pullEvents?stream=message" sse-swap="message" hx-swap="afterend" _="on finished or error remove me">`)
 	tmpl.Execute(w, nil)
 }
 
@@ -44,22 +45,33 @@ func pullEvents(w http.ResponseWriter, r *http.Request) {
 	server := sse.New()
 	server.CreateStream("message")
 	go server.HTTPHandler(w, r)
-	statusChan := make(chan string)
-	defer func() {
-		close(statusChan)
-		statusChan = nil
-	}()
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
-		for status := range statusChan {
+		statusChan := make(chan string)
+		defer func() {
+			close(statusChan)
+			statusChan = nil
+			server.Close()
+		}()
+		wg2 := sync.WaitGroup{}
+		wg2.Add(1)
+		go func() {
+			for status := range statusChan {
+				server.Publish("message", &sse.Event{
+					Data:  []byte("<p>" + status + "</p>"),
+					Event: []byte("message"),
+				})
+			}
 			server.Publish("message", &sse.Event{
-				Data:  []byte("<p>" + status + "</p>"),
 				Event: []byte("message"),
+				Data:  []byte("finished"),
 			})
-		}
-		server.Publish("message", &sse.Event{
-			Event: []byte("finished"),
-		})
-		server.Close()
+			wg2.Done()
+		}()
+		PullAll(statusChan)
+		wg2.Wait()
+		wg.Done()
 	}()
-	PullAll(statusChan)
+	wg.Wait()
 }
