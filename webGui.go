@@ -38,7 +38,7 @@ func getMainPageData() PageData {
 
 func pullAllHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.New("sse-element")
-	tmpl.Parse(`<div id="yolo" name="sse" hx-ext="sse" sse-connect="/pullEvents?stream=message" sse-swap="message" hx-swap="afterend" _="on finished or error remove me">`)
+	tmpl.Parse(`<div id="yolo" name="sse" hx-ext="sse" sse-connect="/pullEvents?stream=message" sse-swap="message" hx-swap="afterend" _="on load add @disabled to #pullButton">`)
 	tmpl.Execute(w, nil)
 }
 
@@ -65,7 +65,7 @@ func pullEvents(w http.ResponseWriter, r *http.Request) {
 		PullAll(statusChan)
 		go func() {
 			defer close(statusChan)
-			statusChan <- "<div _='on load remove #yolo then remove me'>ddd</div>"
+			statusChan <- "<div _='on load remove @disabled from pullButton then remove #yolo then remove me'></div>"
 			time.Sleep(time.Second)
 		}()
 		wg2.Wait()
