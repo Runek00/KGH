@@ -1,40 +1,14 @@
-package main
+package web
 
 import (
+	"KGH/base"
 	"html/template"
-	"log"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/r3labs/sse"
 )
-
-type Translations struct {
-	FindInputLabel  string
-	FindButtonLabel string
-}
-
-type PageData struct {
-	Lang Translations
-}
-
-func webGui() {
-	http.HandleFunc("/", mainPage)
-	http.HandleFunc("/pullAll", pullAllHandler)
-	http.HandleFunc("/pullEvents", pullEvents)
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-func mainPage(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("static/templates/index.html"))
-	tmpl.Execute(w, getMainPageData())
-}
-
-func getMainPageData() PageData {
-	return PageData{Translations{"input", "find"}}
-}
 
 func pullAllHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.New("sse-element")
@@ -62,7 +36,7 @@ func pullEvents(w http.ResponseWriter, r *http.Request) {
 			}
 			wg2.Done()
 		}()
-		PullAll(statusChan)
+		base.PullAll(statusChan)
 		go func() {
 			defer close(statusChan)
 			statusChan <- "<div _='on load remove @disabled from pullButton then remove #yolo then remove me'></div>"
