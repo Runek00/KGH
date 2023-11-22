@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/r3labs/sse"
 )
@@ -49,11 +50,7 @@ func pullEvents(w http.ResponseWriter, r *http.Request) {
 	wg.Add(1)
 	go func() {
 		statusChan := make(chan string)
-		defer func() {
-			close(statusChan)
-			statusChan = nil
-			server.Close()
-		}()
+
 		wg2 := sync.WaitGroup{}
 		wg2.Add(1)
 		go func() {
@@ -63,14 +60,17 @@ func pullEvents(w http.ResponseWriter, r *http.Request) {
 					Event: []byte("message"),
 				})
 			}
-			server.Publish("message", &sse.Event{
-				Event: []byte("message"),
-				Data:  []byte("finished"),
-			})
 			wg2.Done()
 		}()
 		PullAll(statusChan)
+		go func() {
+			defer close(statusChan)
+			statusChan <- "<div _='on load remove #yolo then remove me'>ddd</div>"
+			time.Sleep(time.Second)
+		}()
 		wg2.Wait()
+		statusChan = nil
+		server.Close()
 		wg.Done()
 	}()
 	wg.Wait()
