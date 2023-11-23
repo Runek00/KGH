@@ -104,13 +104,6 @@ func PullAll(statusChan chan string) {
 	statusChan <- "Pull All finished"
 }
 
-type FindCommitsParams struct {
-	noClip       bool
-	file         string
-	print        bool
-	SearchPhrase string
-}
-
 func getParamsAndFindCommits() string {
 	fCmd := flag.NewFlagSet("f", flag.ExitOnError)
 	fNoClip := fCmd.Bool("no-clipboard", false, "no-clipboard")
@@ -119,11 +112,31 @@ func getParamsAndFindCommits() string {
 	fCmd.Parse(os.Args[2:])
 	searchPhrase := fCmd.Args()[0]
 
-	params := FindCommitsParams{*fNoClip, *fFile, *fPrint, searchPhrase}
-	return FindCommits(params)
+	commitSet := FindCommits(searchPhrase)
+	found := ""
+	foundCnt := 0
+	for str := range commitSet {
+		found += str + "\n"
+	}
+	foundCnt = len(commitSet)
+	if !*fNoClip {
+		clipboard.WriteAll(found)
+	}
+	if *fFile != "" {
+		file, err := os.Create(*fFile)
+		if err != nil {
+			fmt.Println("Couldn't create output file")
+		}
+		file.WriteString(found)
+	}
+	if *fPrint {
+		fmt.Println(found)
+	}
+	fmt.Println("Done (" + fmt.Sprint(foundCnt) + " results)")
+	return found
 }
 
-func FindCommits(params FindCommitsParams) string {
+func FindCommits(searchPhrase string) map[string]bool {
 	commitsChan := make(chan string)
 
 	wg := sync.WaitGroup{}
@@ -152,7 +165,7 @@ func FindCommits(params FindCommitsParams) string {
 		}
 		ci.ForEach(func(c *object.Commit) error {
 			buf := &bytes.Buffer{}
-			if strings.Contains(c.Message, params.SearchPhrase) {
+			if strings.Contains(c.Message, searchPhrase) {
 				info := CommitInfo{c.Hash.String(), c.Author.Name, c.Committer.Name, c.Message, repo.Name}
 				tmpl.Execute(buf, info)
 				commitsC <- buf.String()
@@ -165,33 +178,13 @@ func FindCommits(params FindCommitsParams) string {
 		fmt.Println(repo.Name)
 		go findCommit(repo, commitsChan)
 	}
-	found := ""
-	foundCnt := 0
+	commitSet := make(map[string]bool, 0)
 	go func() {
-		commitSet := make(map[string]bool, 0)
 		for str := range commitsChan {
 			commitSet[str] = true
 		}
-		for str := range commitSet {
-			found += str + "\n"
-		}
-		foundCnt = len(commitSet)
 	}()
 	wg.Wait()
 	close(commitsChan)
-	if !params.noClip {
-		clipboard.WriteAll(found)
-	}
-	if params.file != "" {
-		file, err := os.Create(params.file)
-		if err != nil {
-			fmt.Println("Couldn't create output file")
-		}
-		file.WriteString(found)
-	}
-	if params.print {
-		fmt.Println(found)
-	}
-	fmt.Println("Done (" + fmt.Sprint(foundCnt) + " results)")
-	return found
+	return commitSet
 }
