@@ -112,13 +112,10 @@ func getParamsAndFindCommits() string {
 	fCmd.Parse(os.Args[2:])
 	searchPhrase := fCmd.Args()[0]
 
-	commitSet := FindCommits(searchPhrase)
-	found := ""
+	commits := FindCommits(searchPhrase)
+	found := strings.Join(commits, "\n")
 	foundCnt := 0
-	for str := range commitSet {
-		found += str + "\n"
-	}
-	foundCnt = len(commitSet)
+	foundCnt = len(commits)
 	if !*fNoClip {
 		clipboard.WriteAll(found)
 	}
@@ -136,7 +133,7 @@ func getParamsAndFindCommits() string {
 	return found
 }
 
-func FindCommits(searchPhrase string) map[string]bool {
+func FindCommits(searchPhrase string) []string {
 	commitsChan := make(chan string)
 
 	wg := sync.WaitGroup{}
@@ -186,5 +183,11 @@ func FindCommits(searchPhrase string) map[string]bool {
 	}()
 	wg.Wait()
 	close(commitsChan)
-	return commitSet
+	output := make([]string, len(commitSet))
+	i := 0
+	for commit := range commitSet {
+		output[i] = commit
+		i++
+	}
+	return output
 }
