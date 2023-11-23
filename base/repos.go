@@ -104,13 +104,26 @@ func PullAll(statusChan chan string) {
 	statusChan <- "Pull All finished"
 }
 
-func FindCommits() string {
+type FindCommitsParams struct {
+	noClip       bool
+	file         string
+	print        bool
+	SearchPhrase string
+}
+
+func getParamsAndFindCommits() string {
 	fCmd := flag.NewFlagSet("f", flag.ExitOnError)
 	fNoClip := fCmd.Bool("no-clipboard", false, "no-clipboard")
 	fFile := fCmd.String("f", "", "f")
 	fPrint := fCmd.Bool("p", false, "p")
 	fCmd.Parse(os.Args[2:])
-	taskId := fCmd.Args()[0]
+	searchPhrase := fCmd.Args()[0]
+
+	params := FindCommitsParams{*fNoClip, *fFile, *fPrint, searchPhrase}
+	return FindCommits(params)
+}
+
+func FindCommits(params FindCommitsParams) string {
 	commitsChan := make(chan string)
 
 	wg := sync.WaitGroup{}
@@ -139,7 +152,7 @@ func FindCommits() string {
 		}
 		ci.ForEach(func(c *object.Commit) error {
 			buf := &bytes.Buffer{}
-			if strings.Contains(c.Message, taskId) {
+			if strings.Contains(c.Message, params.SearchPhrase) {
 				info := CommitInfo{c.Hash.String(), c.Author.Name, c.Committer.Name, c.Message, repo.Name}
 				tmpl.Execute(buf, info)
 				commitsC <- buf.String()
@@ -166,17 +179,17 @@ func FindCommits() string {
 	}()
 	wg.Wait()
 	close(commitsChan)
-	if !*fNoClip {
+	if !params.noClip {
 		clipboard.WriteAll(found)
 	}
-	if *fFile != "" {
-		file, err := os.Create(*fFile)
+	if params.file != "" {
+		file, err := os.Create(params.file)
 		if err != nil {
 			fmt.Println("Couldn't create output file")
 		}
 		file.WriteString(found)
 	}
-	if *fPrint {
+	if params.print {
 		fmt.Println(found)
 	}
 	fmt.Println("Done (" + fmt.Sprint(foundCnt) + " results)")

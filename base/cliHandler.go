@@ -36,7 +36,7 @@ func HandleInput(args []string) {
 	case "f":
 		fallthrough
 	case "find-commits":
-		FindCommits()
+		getParamsAndFindCommits()
 	}
 }
 
