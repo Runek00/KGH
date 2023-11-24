@@ -24,13 +24,26 @@ func WebGui() {
 	http.HandleFunc("/pullAll", pullAllHandler)
 	http.HandleFunc("/pullEvents", pullEvents)
 	http.HandleFunc("/find", find)
+	http.HandleFunc("/img", getImg)
+	http.Handle("/stylesheets", http.FileServer(http.Dir("./static/stylesheets")))
+	http.Handle("/js", http.FileServer(http.Dir("./static/js")))
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8079", nil))
+}
+
+func getImg(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("static/templates/index.html"))
-	tmpl.Execute(w, getMainPageData())
+	if r.URL.Path == "/" {
+		tmpl := template.Must(template.ParseFiles("static/templates/index.html"))
+		tmpl.Execute(w, getMainPageData())
+	} else {
+		handler := http.FileServer(http.Dir("./static"))
+		handler.ServeHTTP(w, r)
+
+	}
 }
 
 func getMainPageData() PageData {
