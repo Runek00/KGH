@@ -10,8 +10,7 @@
     <script src="/js/sse.js"></script>
 </head>
 <body>
-    <p>
-        <label for="find_input">{{.Lang.FindInputLabel}}</label>
+    <main>
         <input type="text" name="input" id="find_input" autofocus 
             hx-post="/find"
             hx-trigger="buttonEvent, keyup[keyCode==13]"
@@ -19,12 +18,10 @@
             hx-indicator="spinner"
             hx-swap="afterbegin">
         <button _="on click send buttonEvent to #find_input">{{.Lang.FindButtonLabel}}</button>
-    </p>
-    <button id="pullButton" hx-get="/pullAll" hx-target="#result" hx-swap="afterbegin">Pull All</button>
-    <img id="spinner" class="htmx-indicator" src="/img/spinning-circles.svg" alt="Request In Flight..."/>
-    <p id="result">
-    </p>
-
+        <button id="pullButton" hx-get="/pullAll" hx-target="#result" hx-swap="afterbegin">Pull All</button>
+        <img id="spinner" class="htmx-indicator" src="/img/spinning-circles.svg" alt="Request In Flight..."/>
+        <div class="box" id="result"></div>
+    </main>
 TODO:
  Button config
 </body>
