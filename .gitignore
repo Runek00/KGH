@@ -21,3 +21,6 @@
 go.work
 .vscode/*
 *.txt
+static/js/
+static/stylesheets/
+
