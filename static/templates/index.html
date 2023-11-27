@@ -13,13 +13,15 @@
     <main>
         <input type="text" name="input" id="find_input" autofocus 
             hx-post="/find"
-            hx-trigger="buttonEvent, keyup[keyCode==13]"
+            hx-trigger="buttonEvent delay:1s, keyup[keyCode==13] delay:1s"
             hx-target="#result"
-            hx-indicator="spinner"
+            hx-indicator="#spinner"
             hx-swap="afterbegin">
-        <button _="on click send buttonEvent to #find_input">{{.Lang.FindButtonLabel}}</button>
-        <button id="pullButton" hx-get="/pullAll" hx-target="#result" hx-swap="afterbegin">Pull All</button>
+        <button _="on click send buttonEvent to #find_input">
+            {{.Lang.FindButtonLabel}}
+        </button>
         <img id="spinner" class="htmx-indicator" src="/img/spinning-circles.svg" alt="Request In Flight..."/>
+        <button id="pullButton" hx-get="/pullAll" hx-target="#result" hx-swap="afterbegin">Pull All</button>
         <div class="box" id="result"></div>
     </main>
 TODO:

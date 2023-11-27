@@ -24,15 +24,8 @@ func WebGui() {
 	http.HandleFunc("/pullAll", pullAllHandler)
 	http.HandleFunc("/pullEvents", pullEvents)
 	http.HandleFunc("/find", find)
-	http.HandleFunc("/img", getImg)
-	http.Handle("/stylesheets", http.FileServer(http.Dir("./static/stylesheets")))
-	http.Handle("/js", http.FileServer(http.Dir("./static/js")))
 
-	log.Fatal(http.ListenAndServe(":8079", nil))
-}
-
-func getImg(w http.ResponseWriter, r *http.Request) {
-
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
