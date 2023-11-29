@@ -2,11 +2,10 @@ package base
 
 import (
 	"bufio"
-	"errors"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
-	"strings"
-	"text/template"
 )
 
 type Conf struct {
@@ -17,20 +16,8 @@ type Conf struct {
 
 var Config Conf
 
-var templateSet = false
-var reposSet = false
-var filePathSet = false
-
-var configTemplate = `{{ range $index, $value := .Repos }}repo: {{$value.Path}}::{{$value.Name}}::{{$value.Template}}
-{{ end }}
-template: {{.DefaultTemplate}}
-filePath: {{.OutputFilePath}}`
-
 func ReadConfig() error {
-	file, err := os.Open("config.txt")
-	templateSet = false
-	reposSet = false
-	filePathSet = false
+	file, err := os.Open("config.json")
 	newConfig := Conf{make(map[string]Repo), "", ""}
 	if err != nil {
 		fmt.Println("Cannot open file. Starting a new config.")
@@ -40,59 +27,35 @@ func ReadConfig() error {
 		}
 	}
 	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !reposSet && !strings.HasPrefix(line, "repo") && len(newConfig.Repos) > 0 {
-			reposSet = true
-		}
-		if strings.HasPrefix(line, "repo") {
-			if reposSet {
-				return errors.New("repos are not in a single block in config")
-			}
-			repoLine := strings.Split(strings.Split(line, "repo: ")[1], "::")
-			if len(repoLine) < 2 || len(repoLine) > 3 {
-				return errors.New("Error reading repo " + line)
-			}
-			var repo Repo
-			if len(repoLine) == 2 {
-				repo = Repo{repoLine[0], repoLine[1], ""}
-			} else {
-				repo = Repo{repoLine[0], repoLine[1], repoLine[2]}
-			}
-			newConfig.Repos[repo.Path] = repo
-		}
-		if strings.HasPrefix(line, "template") {
-			if templateSet {
-				return errors.New("more then one default template in config")
-			}
-			newConfig.DefaultTemplate = strings.Split(line, "template: ")[1]
-			templateSet = true
-		}
-		if strings.HasPrefix(line, "filePath") {
-			if filePathSet {
-				return errors.New("more than one output file path in config")
-			}
-			newConfig.OutputFilePath = strings.Split(line, "filePath: ")[1]
-			filePathSet = true
-		}
+	byteFile, err := io.ReadAll(file)
+	if err != nil {
+		fmt.Println("Cannot read file")
+		return err
+	}
+	err = json.Unmarshal(byteFile, &newConfig)
+	if err != nil {
+		fmt.Println("Cannot parse file")
+		return err
 	}
 	Config = newConfig
 	return nil
 }
 
 func SaveConfig() error {
-	tmpl := template.New("configTemplate")
-	tmpl, err := tmpl.Parse(configTemplate)
+	file, err := os.Create("config.json")
+	writer := bufio.NewWriter(file)
 	if err != nil {
+		fmt.Println("Cannot even create a writer")
 		return err
 	}
-	file, err := os.Create("config.txt")
+	byteFile, err := json.Marshal(Config)
 	if err != nil {
+		fmt.Println("Config marshalling failed")
 		return err
 	}
-	err = tmpl.Execute(file, Config)
+	_, err = writer.WriteString(string(byteFile))
 	if err != nil {
+		fmt.Println("Cannot write file")
 		return err
 	}
 	return nil

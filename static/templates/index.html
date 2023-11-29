@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>KGH</title>
     <link rel="stylesheet" href="/stylesheets/missing.min.css">
     <script src="/js/htmx.min.js"></script>
     <script src="/js/_hyperscript.min.js"></script>
@@ -22,10 +22,8 @@
         </button>
         <img id="spinner" class="htmx-indicator" src="/img/spinning-circles.svg" alt="Request In Flight..."/>
         <button id="pullButton" hx-get="/pullAll" hx-target="#result" hx-swap="afterbegin">Pull All</button>
-        <a href="/settings"><img src="/img/settings.svg" alt="Settings...">Settings</a>
+        <a href="/settings"><img src="/img/settings.svg" alt="Settings..." hx-boost="true">Settings</a>
         <div class="box" id="result"></div>
     </main>
-TODO:
- Button config
 </body>
 </html>
