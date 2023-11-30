@@ -1,5 +1,13 @@
 <html>
+    <head></head>
     <body>
-
+        <main>
+            <form action="/settings" method="post">
+                <label for="template">{{.Lang.DefaultTemplate}}</label>
+                <input type="text" name="template" id="template">
+                <label for="filePath">{{.Lang.FilePath}}</label>
+                <input type="text" name="filePath" id="filePath">
+            </form>
+        </main>
     </body>
 </html>
